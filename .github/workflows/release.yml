@@ -1,0 +1,49 @@
+name: goreleaser
+
+on:
+  pull_request:
+  push:
+    # run only against tags
+    tags:
+      - "*"
+
+permissions:
+  contents: write
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Add steps to tag the release and push /dist assets with the tag as version
+      - name: Tag Release
+        run: git tag -a v${{ steps.goreleaser.outputs.version }} -m "Release version v${{ steps.goreleaser.outputs.version }}"
+      - name: Push Tags
+        run: git push --follow-tags
+      - name: Copy Dist Assets
+        run: |
+          cp -r dist/* /dist
+      - name: Commit Dist Assets
+        run: |
+          git add /dist
+          git commit -m "Add assets for version v${{ steps.goreleaser.outputs.version }}"
+      - name: Push Dist Assets
+        run: |
+          git push origin HEAD
+
