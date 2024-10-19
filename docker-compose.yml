@@ -1,0 +1,28 @@
+services:
+  turba:
+    container_name: turba
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      PORTFWD_CONFIG_FILE_PATH: "/app/config.yaml"
+    ports:
+      - "5400:5400/udp"
+    volumes:
+      - "./main.yaml:/app/config.yaml"
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+      - net.ipv4.ip_forward=1
+    networks:
+      - main
+
+
+
+networks:
+  main:
+    driver: bridge
+

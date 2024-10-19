@@ -1,0 +1,4 @@
+forward:
+  - protocol: udp4
+    from: 0.0.0.0:5400
+    to: [46.101.65.101:3690]

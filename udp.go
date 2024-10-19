@@ -3,12 +3,14 @@ package main
 import (
 	"log"
 	"net"
-
-	"github.com/libp2p/go-reuseport"
 )
 
 func udpForward(forward ForwardStruct) {
-	src, err := reuseport.ListenPacket(forward.Protocol, forward.From)
+	listenAddress, err := net.ResolveUDPAddr("udp", forward.From)
+	if err != nil {
+		log.Println("Error: failed to parse udp listen address")
+	}
+	src, err := net.ListenUDP(forward.Protocol, listenAddress)
 	if err != nil {
 		log.Printf("The connection failed: %v", err)
 	}
@@ -17,6 +19,7 @@ func udpForward(forward ForwardStruct) {
 	var sliceDst []*net.UDPConn
 
 	for _, to := range forward.To {
+		log.Println("loop for from to to")
 		dstAddr, err := net.ResolveUDPAddr(forward.Protocol, to)
 		if err != nil {
 			log.Printf("Error resolving destination address: %v\n", err)
@@ -32,6 +35,7 @@ func udpForward(forward ForwardStruct) {
 	}
 
 	for {
+		log.Println("loop for to to from")
 		buf := make([]byte, 65535)
 		n, _, err := src.ReadFrom(buf)
 		if err != nil {
@@ -42,4 +46,6 @@ func udpForward(forward ForwardStruct) {
 			_, _ = dst.Write(buf[:n])
 		}
 	}
+
+	log.Println("loops exited")
 }
